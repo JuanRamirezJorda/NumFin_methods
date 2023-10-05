@@ -1,7 +1,6 @@
 #include "basicfunc.h"
 
 
-
 int recursivelySumBetween1AndN(int n) {
 	if (n == 1) {
 		return 1;
@@ -96,33 +95,6 @@ const double c6 = 0.0000321767881768;
 const double c7 = 0.0000002888167364;
 const double c8 = 0.0000003960315187;
 
-double norminv(double x) {
-	// We use Moro's algorithm
-	double y = x - 0.5;
-	if (y<0.42 && y>-0.42) {
-		double r = y * y;
-		return y * hornerFunction(r, a0, a1, a2, a3) / hornerFunction(r, 1.0, b1, b2, b3, b4);
-	}
-	else {
-		double r;
-		if (y < 0.0) {
-			r = x;
-		}
-		else {
-			r = 1.0 - x;
-		}
-		double s = log(-log(r));
-		double t = hornerFunction(s, c0, c1, c2, c3, c4, c5, c6, c7, c8);
-		if (x > 0.5) {
-			return t;
-		}
-		else {
-			return -t;
-		}
-	}
-}
-
-
 
 double blackScholesCallPrice(double strike, double timeToMaturity,
 	double spot, double volatility, double riskFreeRate) {
@@ -206,3 +178,31 @@ double norminv(double x, bool checkRange = true) {
 
 
 
+static void testNormCdf() {
+	// test bounds
+	ASSERT(normcdf(0.3) > 0);
+	ASSERT(normcdf(0.3) < 1);
+	// test extreme values
+	ASSERT_APPROX_EQUAL(normcdf(-1e10), 0, 0.001);
+	ASSERT_APPROX_EQUAL(normcdf(1e10), 1.0, 0.001);
+	// test increasing
+	ASSERT(normcdf(0.3) < normcdf(0.5));
+	// test symmetry
+	ASSERT_APPROX_EQUAL(normcdf(0.3),
+		1 - normcdf(-0.3), 0.0001);
+	ASSERT_APPROX_EQUAL(normcdf(0.0), 0.5, 0.0001);
+	// test inverse
+	ASSERT_APPROX_EQUAL(normcdf(norminv(0.3)),
+		0.3, 0.0001);
+	// test well known value
+	ASSERT_APPROX_EQUAL(normcdf(1.96), 0.975, 0.001);
+}
+
+static void testNormInv() {
+	ASSERT_APPROX_EQUAL(norminv(0.975), 1.96, 0.01);
+}
+
+void testSample() {
+	TEST(testNormInv);
+	TEST(testNormCdf);
+}
